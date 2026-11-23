@@ -1,0 +1,32 @@
+#!/bin/bash
+# finedistro/build: a Void Linux root filesystem with dinit instead of runit, in ./out/rootfs. Runs the Void tools in a
+# podman container, so it works from any distro. Settings through the environment: LIBC=glibc|musl (glibc),
+# OUT=dir (./out). The sibling repos (../nnn, ../netman, ../finedesktop, ../.dotfiles) are mounted read-only,
+# because the dinit.d symlinks point into them.
+# Steps: packages/* -> overlay/ -> dinit.d/ -> our nnn, netman and finedesktop built inside the image's own libc -> uutils.
+set -euo pipefail
+here=$(cd "$(dirname "$0")" && pwd)
+LIBC=${LIBC:-glibc}
+OUT=${OUT:-$here/out}
+mkdir -p "$OUT/rootfs"
+pk=$(cat "$here"/packages/* | sed 's/#.*//' | xargs)
+[ "$LIBC" = musl ] && repo=https://repo-default.voidlinux.org/current/musl || repo=https://repo-default.voidlinux.org/current
+podman run --rm -v "$OUT/rootfs:/target" -v "$(cd "$here/.." && pwd):/w:ro" \
+    "ghcr.io/void-linux/void-$LIBC:latest" sh -eu -c "
+  xbps-install -Syu xbps >/dev/null
+  mkdir -p /target/var/db/xbps/keys && cp /var/db/xbps/keys/* /target/var/db/xbps/keys/
+  XBPS_ARCH=\$(xbps-uhelper arch) xbps-install -y -S -r /target -R $repo $pk || xbps-query -r /target base-system >/dev/null   # a rerun reports installed packages as errors
+  cp -a /w/finedistro/overlay/. /target/
+  mkdir -p /target/etc/dinit.d && cp -aL /w/finedistro/dinit.d/. /target/etc/dinit.d/
+  xbps-install -y bash findutils make gcc ncurses-devel readline-devel cargo pkg-config libinput-devel libxkbcommon-devel MesaLib-devel wayland-devel libseat-devel eudev-libudev-devel elogind-devel
+  cp -a /w/nnn /tmp/nnn && make -C /tmp/nnn O_NORL=1 PREFIX=/target/usr/local install
+  cp -a /w/netman /tmp/netman && cd /tmp/netman && ./build >/dev/null && DESTDIR=/target PREFIX=/usr/local ./install
+  cd /
+  cp -a /w/finedesktop/finedesktop-rs /tmp/fd && cd /tmp/fd && cargo build --release --target-dir /tmp/fdt
+  install -D /tmp/fdt/release/finedesktop /target/usr/local/bin/finedesktop
+  install -D /tmp/fd/session/finedesktop-session /target/usr/local/bin/finedesktop-session
+  install -D /tmp/fd/session/fd-shell /target/usr/local/bin/fd-shell
+  sh /w/finedistro/uutils /target   # Rust coreutils (uutils) instead of GNU's C ones
+  make -C /tmp/fd/session nottsd && install -D /tmp/fd/session/nottsd /target/usr/local/bin/nottsd
+"
+echo "rootfs: $OUT/rootfs"

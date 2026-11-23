@@ -1,0 +1,5 @@
+type = process
+command = /usr/libexec/iwd
+restart = true
+depends-on = dbus
+depends-on = udev

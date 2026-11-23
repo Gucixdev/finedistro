@@ -1,0 +1,5 @@
+# system message bus (no syslogd here, so no --syslog-only)
+type = process
+command = /usr/bin/dbus-daemon --system --nofork --nopidfile
+restart = true
+depends-on = dbus-pre

@@ -1,0 +1,14 @@
+# Void base. One package per line, # comments. `build` installs every file in this folder.
+base-system
+dinit
+elogind
+dbus
+eudev
+turnstile
+iwd
+kmscon
+bluez
+git
+tmux
+xdg-utils
+xdg-user-dirs

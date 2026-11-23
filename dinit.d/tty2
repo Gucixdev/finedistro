@@ -1,0 +1,5 @@
+# fallback console, no KMS needed
+type = process
+command = /usr/bin/agetty --noclear tty2 linux
+restart = true
+depends-on = early-fs

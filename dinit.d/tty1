@@ -1,0 +1,8 @@
+# kmscon on tty1: a KMS console with mouse (select to copy, wheel to scroll, Ctrl+plus/minus to zoom) instead of the kernel
+# one. Its login shell starts the desktop (overlay/etc/profile.d/finedesktop.sh). tty2 is a plain agetty, the way in when
+# kmscon cannot start (no KMS driver, virtual machine without a GPU).
+type = process
+command = /usr/bin/kmscon --vt=1 --no-switchvt --login -- /usr/bin/login -p
+restart = true
+depends-on = early-fs
+waits-for = elogind

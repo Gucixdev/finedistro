@@ -1,0 +1,20 @@
+#!/bin/sh
+# finedistro/uutils ROOT: make the Rust coreutils (uutils) the coreutils of the root filesystem at ROOT, instead of GNU's C ones.
+# Void has no uutils package, so it is built with cargo (needs cargo, gcc, make in the running system) into ONE multi-call binary
+# /usr/bin/coreutils, and every tool name becomes a symlink to it. GNU `coreutils` stays installed (base-system depends on it),
+# `ignorepkg` keeps xbps from putting its files back. UUTILS_VERSION pins the crate version (default: newest).
+set -eu
+root=${1:?usage: uutils ROOT}
+ver=${UUTILS_VERSION:+--version $UUTILS_VERSION}
+tmp=$(mktemp -d)
+cargo install coreutils --locked --features unix $ver --root "$tmp" --target-dir "$tmp/t" >&2
+install -D "$tmp/bin/coreutils" "$root/usr/bin/coreutils"
+n=0
+for u in $("$tmp/bin/coreutils" --list); do
+	[ "$u" = coreutils ] && continue
+	ln -sfn coreutils "$root/usr/bin/$u"
+	n=$((n + 1))
+done
+mkdir -p "$root/etc/xbps.d"
+echo 'ignorepkg=coreutils' > "$root/etc/xbps.d/10-uutils.conf"
+echo "uutils: $n tools -> /usr/bin/coreutils ($("$tmp/bin/coreutils" --version | head -1))"

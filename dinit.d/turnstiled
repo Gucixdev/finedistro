@@ -1,0 +1,5 @@
+# per-user dinit instances (pipewire, wireplumber, ...) started at login, from ~/.config/dinit.d/
+type = process
+command = /usr/bin/turnstiled
+restart = true
+depends-on = elogind

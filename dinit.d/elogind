@@ -1,0 +1,6 @@
+# logind: seats and sessions (libseat's logind backend, what finedesktop and pipewire use). Needs the bus.
+type = process
+command = /usr/libexec/elogind/elogind
+restart = true
+depends-on = dbus
+depends-on = udev

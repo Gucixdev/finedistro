@@ -1,0 +1,18 @@
+#!/bin/bash
+# finedistro/check: every package in packages/* exists in Void's repo, and dinit's own checker accepts the service tree
+# with packages/base installed (dependency cycles, missing commands, bad lines). Needs podman and network. Exit 0 = fine.
+set -euo pipefail
+here=$(cd "$(dirname "$0")" && pwd)
+all=$(cat "$here"/packages/* | sed 's/#.*//' | xargs)
+base=$(sed 's/#.*//' "$here/packages/base" | xargs)
+podman run --rm -v "$(cd "$here/.." && pwd):~/src:ro" ghcr.io/void-linux/void-glibc:latest sh -eu -c "
+  xbps-install -Syu xbps >/dev/null
+  bad=0; for p in $all; do xbps-query -R \$p >/dev/null 2>&1 || { echo \"no such package: \$p\"; bad=1; }; done
+  [ \$bad = 0 ] && echo 'packages: ok'
+  xbps-install -y dinit $base >/dev/null 2>&1 || echo 'warning: some base packages did not install'
+  # stand-ins for what build compiles
+  mkdir -p /usr/local/bin; for b in netman finedesktop-session; do printf '#!/bin/sh\n' > /usr/local/bin/\$b; chmod +x /usr/local/bin/\$b; done
+  cp -aL ~/src/finedistro/dinit.d/. /etc/dinit.d/
+  dinit-check -d /etc/dinit.d boot 2>&1 | grep -v '^Checking' || true
+  dinit-check -d /etc/dinit.d boot >/dev/null 2>&1 && echo 'dinit tree: ok' || bad=1
+  exit \$bad"

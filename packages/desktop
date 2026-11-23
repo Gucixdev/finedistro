@@ -1,0 +1,12 @@
+# What finedesktop needs at run time (it is built in the image, see build) plus the session around it.
+foot
+mesa-dri
+vulkan-loader
+libinput
+libxkbcommon
+wayland
+pipewire
+wireplumber
+wl-clipboard
+grim
+slurp

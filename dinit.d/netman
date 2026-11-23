@@ -1,0 +1,8 @@
+# our netman (../netman): `netman daemon` serves the NetworkManager D-Bus API for nm-applet/libnm clients and needs the
+# system bus; Wi-Fi goes through iwd. Links, DHCP and VPNs are netman commands/TUI (`netman`), not this daemon.
+type = process
+command = /usr/local/bin/netman daemon
+restart = true
+depends-on = dbus
+depends-on = iwd
+depends-on = loopback

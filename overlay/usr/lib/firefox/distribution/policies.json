@@ -1,0 +1,11 @@
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "DontCheckDefaultBrowser": true,
+    "OverrideFirstRunPage": "",
+    "Preferences": {
+      "browser.sessionstore.resume_from_crash": true,
+      "toolkit.legacyUserProfileCustomizations.stylesheets": true
+    }
+  }
+}

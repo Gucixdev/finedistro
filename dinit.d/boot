@@ -1,0 +1,3 @@
+# top-level target: every member of boot.d is waited for, so "boot" STARTED means the base system is up.
+type = internal
+waits-for.d = boot.d
